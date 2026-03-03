@@ -2,13 +2,18 @@ import requests
 import json
 import base64
 
+CRED_DIR = "/home/codio/workspace"
+
 
 def pin_to_ipfs(data):
     assert isinstance(data, dict), "Error pin_to_ipfs expects a dictionary"
 
-    # 🔐 Replace with your Infura project credentials
-    project_id = "My First Key"
-    project_secret = "+IkSUGUp+WR3xybxQpUEGZdsFxGGqKwXUoi5kqL7NtZDNnDw7xLJlA"
+    # Read Infura IPFS credentials
+    with open(f"{CRED_DIR}/ipfs_project_id.txt", "r") as f:
+        project_id = f.read().strip()
+
+    with open(f"{CRED_DIR}/ipfs_project_secret.txt", "r") as f:
+        project_secret = f.read().strip()
 
     auth = base64.b64encode(
         f"{project_id}:{project_secret}".encode()
@@ -37,9 +42,12 @@ def pin_to_ipfs(data):
 def get_from_ipfs(cid, content_type="json"):
     assert isinstance(cid, str), "get_from_ipfs accepts a cid in the form of a string"
 
-    # 🔐 Replace with your Infura project credentials
-    project_id = "YOUR_PROJECT_ID"
-    project_secret = "YOUR_PROJECT_SECRET"
+    # Read Infura IPFS credentials
+    with open(f"{CRED_DIR}/ipfs_project_id.txt", "r") as f:
+        project_id = f.read().strip()
+
+    with open(f"{CRED_DIR}/ipfs_project_secret.txt", "r") as f:
+        project_secret = f.read().strip()
 
     auth = base64.b64encode(
         f"{project_id}:{project_secret}".encode()
@@ -49,6 +57,7 @@ def get_from_ipfs(cid, content_type="json"):
         "Authorization": f"Basic {auth}"
     }
 
+    # Infura requires POST for cat
     url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
 
     response = requests.post(url, headers=headers)
