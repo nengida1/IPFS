@@ -8,34 +8,19 @@ CRED_DIR = "/home/codio/workspace"
 def pin_to_ipfs(data):
     assert isinstance(data, dict), "Error pin_to_ipfs expects a dictionary"
 
-    # Read Infura IPFS credentials
-    with open(f"{CRED_DIR}/ipfs_project_id.txt", "r") as f:
-        project_id = f.read().strip()
+    with open(f"{CRED_DIR}/pinata_jwt.txt", "r") as f:
+        jwt = f.read().strip()
 
-    with open(f"{CRED_DIR}/ipfs_project_secret.txt", "r") as f:
-        project_secret = f.read().strip()
-
-    auth = base64.b64encode(
-        f"{project_id}:{project_secret}".encode()
-    ).decode()
-
+    url = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
     headers = {
-        "Authorization": f"Basic {auth}"
+        "Authorization": f"Bearer {jwt}",
+        "Content-Type": "application/json",
     }
 
-    url = "https://ipfs.infura.io:5001/api/v0/add"
+    resp = requests.post(url, headers=headers, data=json.dumps(data), timeout=30)
+    resp.raise_for_status()
 
-    json_data = json.dumps(data)
-
-    files = {
-        "file": ("data.json", json_data)
-    }
-
-    response = requests.post(url, files=files, headers=headers)
-    response.raise_for_status()
-
-    cid = response.json()["Hash"]
-
+    cid = resp.json()["IpfsHash"]
     return cid
 
 
