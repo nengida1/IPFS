@@ -42,29 +42,22 @@ def pin_to_ipfs(data):
 def get_from_ipfs(cid, content_type="json"):
     assert isinstance(cid, str), "get_from_ipfs accepts a cid in the form of a string"
 
-    # Read Infura IPFS credentials
-    with open(f"{CRED_DIR}/ipfs_project_id.txt", "r") as f:
-        project_id = f.read().strip()
+    gateways = [
+        "https://ipfs.io/ipfs/",
+        "https://cloudflare-ipfs.com/ipfs/",
+        "https://gateway.pinata.cloud/ipfs/",
+    ]
 
-    with open(f"{CRED_DIR}/ipfs_project_secret.txt", "r") as f:
-        project_secret = f.read().strip()
+    last_err = None
+    for base in gateways:
+        try:
+            url = f"{base}{cid}"
+            r = requests.get(url, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            assert isinstance(data, dict), "get_from_ipfs should return a dict"
+            return data
+        except Exception as e:
+            last_err = e
 
-    auth = base64.b64encode(
-        f"{project_id}:{project_secret}".encode()
-    ).decode()
-
-    headers = {
-        "Authorization": f"Basic {auth}"
-    }
-
-    # Infura requires POST for cat
-    url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
-
-    response = requests.post(url, headers=headers)
-    response.raise_for_status()
-
-    data = json.loads(response.text)
-
-    assert isinstance(data, dict), "get_from_ipfs should return a dict"
-
-    return data
+    raise RuntimeError(f"ERROR: reading {cid} from IPFS gateways. Last error: {last_err}")
